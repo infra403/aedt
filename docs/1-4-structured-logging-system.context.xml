@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story_context>
+  <metadata>
+    <epic_id>1</epic_id>
+    <story_id>1.4</story_id>
+    <story_key>1-4-structured-logging-system</story_key>
+    <title>结构化日志系统</title>
+    <status>ready-for-dev</status>
+    <created>2025-11-23</created>
+  </metadata>
+
+  <user_story>
+    <as_a>排查问题的开发者</as_a>
+    <i_want>AEDT 生成具有不同严重级别的结构化日志</i_want>
+    <so_that>我可以调试问题并追踪操作</so_that>
+  </user_story>
+
+  <acceptance_criteria>
+    <criterion id="AC1">
+      <given>AEDT 正在运行</given>
+      <when>任意操作发生（Epic 启动、Git 操作、质量检查等）</when>
+      <then>日志条目写入 `.aedt/logs/aedt.log`</then>
+      <and>条目包含：时间戳、级别（DEBUG/INFO/WARNING/ERROR）、模块、消息</and>
+    </criterion>
+    <criterion id="AC2">
+      <given>Epic 启动</given>
+      <when>Epic 级别操作发生</when>
+      <then>创建独立日志文件 `.aedt/projects/&lt;project&gt;/epics/epic-&lt;id&gt;.log`</then>
+      <and>包含所有 Epic 特定操作</and>
+    </criterion>
+    <criterion id="AC3">
+      <given>日志级别设为 INFO</given>
+      <when>记录 DEBUG 消息</when>
+      <then>该消息不写入文件（被级别过滤）</then>
+    </criterion>
+  </acceptance_criteria>
+
+  <story_tasks>
+    <task id="1" name="实现 AEDTLogger 核心类">
+      <subtask>使用 Python logging 模块创建自定义日志器</subtask>
+      <subtask>实现全局日志器（aedt.log）</subtask>
+      <subtask>实现 Epic 专用日志器（epic-&lt;id&gt;.log）</subtask>
+      <subtask>配置日志格式和级别</subtask>
+    </task>
+    <task id="2" name="实现日志轮转机制">
+      <subtask>使用 RotatingFileHandler</subtask>
+      <subtask>单文件最大 10MB</subtask>
+      <subtask>保留 5 个历史文件</subtask>
+      <subtask>自动清理旧日志</subtask>
+    </task>
+    <task id="3" name="实现日志分离逻辑">
+      <subtask>全局日志：所有系统操作</subtask>
+      <subtask>Epic 日志：特定 Epic 的操作</subtask>
+      <subtask>模块日志：按模块分类（可选）</subtask>
+    </task>
+    <task id="4" name="实现日志级别过滤">
+      <subtask>DEBUG：详细调试信息</subtask>
+      <subtask>INFO：关键操作记录</subtask>
+      <subtask>WARNING：潜在问题警告</subtask>
+      <subtask>ERROR：错误和异常</subtask>
+    </task>
+    <task id="5" name="编写单元测试">
+      <subtask>测试日志格式正确性</subtask>
+      <subtask>测试日志级别过滤</subtask>
+      <subtask>测试日志轮转机制</subtask>
+      <subtask>测试 Epic 专用日志创建</subtask>
+    </task>
+  </story_tasks>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-1.md</path>
+        <title>Epic 1 Technical Specification</title>
+        <section>详细设计 → Logger 模块</section>
+        <snippet>分级日志（DEBUG、INFO、WARNING、ERROR），日志轮转（单文件最大 10MB，保留 5 个历史文件），分离日志（全局日志 + Epic 专用日志），格式统一（时间戳 + 级别 + 模块名 + 消息）</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-1.md</path>
+        <title>Epic 1 Technical Specification</title>
+        <section>数据模型与契约 → 目录结构</section>
+        <snippet>日志目录结构：.aedt/logs/aedt.log（全局日志）、.aedt/logs/aedt.log.1（轮转备份）、.aedt/projects/{project-name}/epics/epic-{id}.log（Epic 专用日志）</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>非功能需求 → 可观测性</section>
+        <snippet>NFR20 - 日志完整性：所有关键操作都有日志记录（INFO 级别），错误操作记录详细堆栈（ERROR 级别），日志格式统一：[时间戳] [级别] [模块] 消息</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>功能需求 → 配置与状态管理</section>
+        <snippet>FR57 - 系统可以生成结构化日志：日志文件 .aedt/logs/aedt.log，分级日志（DEBUG、INFO、WARNING、ERROR），每个 Epic 的独立日志</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <interface>
+        <name>AEDTLogger</name>
+        <kind>class</kind>
+        <signature>class AEDTLogger: def __init__(self, log_dir: Path, log_level: str = "INFO")</signature>
+        <path>src/aedt/core/logger.py</path>
+        <purpose>AEDT 日志系统，提供全局和 Epic 专用日志器</purpose>
+      </interface>
+      <interface>
+        <name>AEDTLogger._setup_logger</name>
+        <kind>method</kind>
+        <signature>def _setup_logger(self, name: str, log_file: Path, max_bytes: int = 10 * 1024 * 1024, backup_count: int = 5) -> logging.Logger:</signature>
+        <path>src/aedt/core/logger.py</path>
+        <purpose>设置日志器，配置文件 handler、格式化器和日志轮转</purpose>
+      </interface>
+      <interface>
+        <name>AEDTLogger.get_logger</name>
+        <kind>method</kind>
+        <signature>def get_logger(self, name: str) -> logging.Logger:</signature>
+        <path>src/aedt/core/logger.py</path>
+        <purpose>获取模块日志器</purpose>
+      </interface>
+      <interface>
+        <name>AEDTLogger.get_epic_logger</name>
+        <kind>method</kind>
+        <signature>def get_epic_logger(self, project_name: str, epic_id: str) -> logging.Logger:</signature>
+        <path>src/aedt/core/logger.py</path>
+        <purpose>获取 Epic 专用日志器</purpose>
+      </interface>
+    </code>
+
+    <dependencies>
+      <python>
+        <package name="logging" version="standard-library" reason="Python 标准库，提供日志功能"/>
+        <package name="logging.handlers" version="standard-library" reason="RotatingFileHandler 用于日志轮转"/>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="format">日志格式必须统一：[时间戳] [级别] [模块] 消息</constraint>
+    <constraint type="rotation">日志轮转单文件最大 10MB，保留 5 个历史文件</constraint>
+    <constraint type="separation">Epic 专用日志独立存储，不与全局日志混合</constraint>
+    <constraint type="performance">日志写入不能阻塞主线程，使用异步 handler（如果需要）</constraint>
+    <constraint type="encoding">所有日志文件使用 UTF-8 编码</constraint>
+  </constraints>
+
+  <tests>
+    <standards>pytest framework, 80%+ coverage, test-driven development</standards>
+    <locations>
+      <location>tests/unit/test_logger.py</location>
+      <location>tests/integration/test_logging.py</location>
+    </locations>
+    <ideas>
+      <test_idea for="AC1">
+        <name>test_log_entry_format</name>
+        <description>验证日志条目包含时间戳、级别、模块、消息</description>
+      </test_idea>
+      <test_idea for="AC1">
+        <name>test_global_logger</name>
+        <description>验证全局日志器正确写入 aedt.log</description>
+      </test_idea>
+      <test_idea for="AC2">
+        <name>test_epic_logger</name>
+        <description>验证 Epic 专用日志器创建独立日志文件</description>
+      </test_idea>
+      <test_idea for="AC2">
+        <name>test_epic_log_separation</name>
+        <description>验证 Epic 日志与全局日志分离</description>
+      </test_idea>
+      <test_idea for="AC3">
+        <name>test_log_level_filtering</name>
+        <description>验证日志级别过滤正确工作</description>
+      </test_idea>
+      <test_idea for="rotation">
+        <name>test_log_rotation</name>
+        <description>验证日志轮转机制（文件大小超限时创建新文件）</description>
+      </test_idea>
+      <test_idea for="rotation">
+        <name>test_log_backup_cleanup</name>
+        <description>验证保留 5 个历史文件，清理旧日志</description>
+      </test_idea>
+    </ideas>
+  </tests>
+</story_context>

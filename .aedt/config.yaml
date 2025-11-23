@@ -1,0 +1,20 @@
+version: "1.0"
+
+subagent:
+  max_concurrent: 5
+  timeout: 3600
+  model: "claude-sonnet-4"
+
+quality_gates:
+  pre_commit:
+    - "lint"
+    - "format_check"
+  epic_complete:
+    - "unit_tests"
+  pre_merge:
+    - "integration_tests"
+
+git:
+  worktree_base: ".aedt/worktrees"
+  branch_prefix: "epic"
+  auto_cleanup: true

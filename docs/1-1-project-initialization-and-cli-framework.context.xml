@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story_context>
+  <metadata>
+    <epic_id>1</epic_id>
+    <story_id>1.1</story_id>
+    <story_key>1-1-project-initialization-and-cli-framework</story_key>
+    <title>项目初始化与 CLI 框架</title>
+    <status>ready-for-dev</status>
+    <created>2025-11-23</created>
+  </metadata>
+
+  <user_story>
+    <as_a>开发者</as_a>
+    <i_want>运行 `aedt init` 来初始化 AEDT 配置</i_want>
+    <so_that>我可以开始使用 AEDT 并拥有正确的设置</so_that>
+  </user_story>
+
+  <acceptance_criteria>
+    <criterion id="AC1">
+      <given>我在一个想要使用 AEDT 的目录</given>
+      <when>我运行 `aedt init`</when>
+      <then>创建 `.aedt/` 目录</then>
+      <and>生成 `config.yaml` 文件并包含默认设置</and>
+      <and>CLI 显示 "AEDT initialized successfully"</and>
+      <and>配置包含 max_concurrent、quality_gates、git 设置</and>
+    </criterion>
+    <criterion id="AC2">
+      <given>AEDT 已初始化</given>
+      <when>我再次运行 `aedt init`</when>
+      <then>CLI 提示 "AEDT already initialized. Overwrite? [y/N]"</then>
+      <and>如果选择 'N'，保留现有配置</and>
+    </criterion>
+  </acceptance_criteria>
+
+  <story_tasks>
+    <task id="1" name="创建 CLI 框架和入口点">
+      <subtask>使用 Click 框架创建主 CLI 命令组</subtask>
+      <subtask>实现 `aedt init` 命令</subtask>
+      <subtask>添加 `--force` 和 `--global` 选项</subtask>
+      <subtask>实现友好的彩色输出（成功/失败提示）</subtask>
+    </task>
+    <task id="2" name="实现目录结构创建逻辑">
+      <subtask>创建全局配置目录：`~/.aedt/`、`~/.aedt/logs/`</subtask>
+      <subtask>创建项目配置目录：`{project-root}/.aedt/`</subtask>
+      <subtask>创建子目录：`projects/`、`worktrees/`、`logs/`</subtask>
+      <subtask>实现目录创建验证逻辑（检查每个目录是否创建成功）</subtask>
+      <subtask>处理权限错误和磁盘空间不足等异常</subtask>
+    </task>
+    <task id="3" name="实现配置文件生成">
+      <subtask>创建默认配置模板（包含所有必需字段）</subtask>
+      <subtask>生成 `.aedt/config.yaml` 文件</subtask>
+      <subtask>验证配置文件格式（YAML 语法正确性）</subtask>
+      <subtask>实现覆盖保护逻辑（已初始化时提示确认）</subtask>
+    </task>
+    <task id="4" name="实现错误处理和用户提示">
+      <subtask>权限问题 → "请检查目录权限：{path}"</subtask>
+      <subtask>磁盘空间不足 → "磁盘空间不足，请清理后重试"</subtask>
+      <subtask>其他错误 → 显示具体异常信息和建议操作</subtask>
+      <subtask>使用友好的错误提示，而非技术堆栈跟踪</subtask>
+    </task>
+    <task id="5" name="编写单元测试和集成测试">
+      <subtask>测试初始化流程（成功场景）</subtask>
+      <subtask>测试覆盖保护逻辑</subtask>
+      <subtask>测试错误处理（权限、磁盘空间等）</subtask>
+      <subtask>测试配置文件生成和验证</subtask>
+    </task>
+  </story_tasks>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-1.md</path>
+        <title>Epic 1 Technical Specification</title>
+        <section>详细设计 → CLI 框架模块</section>
+        <snippet>使用 Click 的 @click.group() 实现命令组，支持 --force 参数强制覆盖已存在配置，支持 --global 参数初始化全局配置（~/.aedt/）</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-1.md</path>
+        <title>Epic 1 Technical Specification</title>
+        <section>详细设计 → ConfigManager 模块</section>
+        <snippet>ConfigManager 负责初始化配置文件和目录结构，创建 .aedt/ 目录及其子目录（logs/、projects/、worktrees/），生成包含默认值的 config.yaml 文件</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>AEDT System Architecture</title>
+        <section>架构原则 → 用户友好</section>
+        <snippet>友好的错误提示，而非技术堆栈跟踪；内置帮助系统，快捷键提示；5 分钟上手，无需阅读完整文档</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>非功能需求 → 可用性与用户体验</section>
+        <snippet>NFR13 - 学习曲线：新用户无需阅读文档，通过首次启动引导 + TUI 提示，5 分钟内完成第一次并行开发</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <interface>
+        <name>cli</name>
+        <kind>function</kind>
+        <signature>@click.group() @click.version_option(version='0.1.0') def cli():</signature>
+        <path>src/aedt/cli/main.py</path>
+        <purpose>AEDT 主命令组入口点</purpose>
+      </interface>
+      <interface>
+        <name>init</name>
+        <kind>function</kind>
+        <signature>@cli.command() @click.option('--force', is_flag=True) @click.option('--global', 'is_global', is_flag=True) def init(force: bool, is_global: bool):</signature>
+        <path>src/aedt/cli/main.py</path>
+        <purpose>初始化 AEDT 配置命令</purpose>
+      </interface>
+      <interface>
+        <name>ConfigManager</name>
+        <kind>class</kind>
+        <signature>class ConfigManager: def __init__(self, config_path: Optional[Path] = None)</signature>
+        <path>src/aedt/core/config_manager.py</path>
+        <purpose>配置管理器，负责初始化和加载配置</purpose>
+      </interface>
+      <interface>
+        <name>ConfigManager.initialize</name>
+        <kind>method</kind>
+        <signature>def initialize(self, force: bool = False, is_global: bool = False) -> bool:</signature>
+        <path>src/aedt/core/config_manager.py</path>
+        <purpose>初始化配置文件和目录结构</purpose>
+      </interface>
+      <interface>
+        <name>ConfigManager._ensure_directory</name>
+        <kind>method</kind>
+        <signature>def _ensure_directory(self, path: Path) -> bool:</signature>
+        <path>src/aedt/core/config_manager.py</path>
+        <purpose>确保目录存在，处理权限和其他错误</purpose>
+      </interface>
+    </code>
+
+    <dependencies>
+      <python>
+        <package name="click" version=">=8.0.0" reason="CLI 框架，用于构建命令行界面"/>
+        <package name="pyyaml" version=">=6.0" reason="YAML 配置文件解析和生成"/>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture">使用 Click 框架构建 CLI，符合 Python CLI 最佳实践</constraint>
+    <constraint type="reliability">目录创建失败时立即返回错误，不允许部分初始化状态</constraint>
+    <constraint type="usability">所有错误提示使用自然语言，提供建议操作而非技术堆栈</constraint>
+    <constraint type="security">API 密钥从环境变量读取，不存储在配置文件中</constraint>
+    <constraint type="platform">MVP 阶段仅支持 macOS 和 Linux，Python 3.10+</constraint>
+  </constraints>
+
+  <tests>
+    <standards>pytest framework, 80%+ coverage, test-driven development</standards>
+    <locations>
+      <location>tests/unit/test_cli.py</location>
+      <location>tests/unit/test_config_manager.py</location>
+      <location>tests/integration/test_init_command.py</location>
+    </locations>
+    <ideas>
+      <test_idea for="AC1">
+        <name>test_init_creates_directories</name>
+        <description>验证运行 aedt init 后创建 .aedt/ 目录及子目录</description>
+      </test_idea>
+      <test_idea for="AC1">
+        <name>test_init_creates_config_file</name>
+        <description>验证生成 config.yaml 文件并包含所有默认字段</description>
+      </test_idea>
+      <test_idea for="AC1">
+        <name>test_init_success_message</name>
+        <description>验证成功时显示绿色成功消息</description>
+      </test_idea>
+      <test_idea for="AC2">
+        <name>test_init_overwrite_prompt</name>
+        <description>验证已初始化时提示覆盖确认</description>
+      </test_idea>
+      <test_idea for="AC2">
+        <name>test_init_preserve_existing_config</name>
+        <description>验证选择 'N' 时保留现有配置</description>
+      </test_idea>
+      <test_idea for="error_handling">
+        <name>test_init_permission_error</name>
+        <description>验证权限错误时显示友好提示</description>
+      </test_idea>
+      <test_idea for="error_handling">
+        <name>test_init_disk_full_error</name>
+        <description>验证磁盘空间不足时显示友好提示</description>
+      </test_idea>
+    </ideas>
+  </tests>
+</story_context>

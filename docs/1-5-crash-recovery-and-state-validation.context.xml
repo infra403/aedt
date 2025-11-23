@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story_context>
+  <metadata>
+    <epic_id>1</epic_id>
+    <story_id>1.5</story_id>
+    <story_key>1-5-crash-recovery-and-state-validation</story_key>
+    <title>崩溃恢复与状态验证</title>
+    <status>ready-for-dev</status>
+    <created>2025-11-23</created>
+  </metadata>
+
+  <user_story>
+    <as_a>用户</as_a>
+    <i_want>AEDT 自动从崩溃中恢复</i_want>
+    <so_that>我可以无需手动清理即可恢复工作</so_that>
+  </user_story>
+
+  <acceptance_criteria>
+    <criterion id="AC1">
+      <given>AEDT 在 Epic 开发中崩溃</given>
+      <when>我重启 AEDT</when>
+      <then>系统从磁盘加载所有项目状态</then>
+      <and>将崩溃的 Epic 标记为 "paused"（非 "running"）</and>
+      <and>显示："Recovered from crash. 2 Epics were paused. Resume with `aedt resume epic-&lt;id&gt;`"</and>
+    </criterion>
+    <criterion id="AC2">
+      <given>状态文件中的 Worktree 路径不存在</given>
+      <when>AEDT 加载状态</when>
+      <then>Worktree 引用标记为 "invalid"</then>
+      <and>Epic 状态设为 "requires_cleanup"</and>
+      <and>提示用户运行 `aedt clean` 或手动修复</and>
+    </criterion>
+    <criterion id="AC3">
+      <given>状态文件损坏（无效 YAML）</given>
+      <when>AEDT 启动</when>
+      <then>CLI 显示："State file corrupted: &lt;path&gt;. Backup exists at &lt;path&gt;.backup"</then>
+      <and>提供恢复备份或重新初始化的选项</and>
+    </criterion>
+  </acceptance_criteria>
+
+  <story_tasks>
+    <task id="1" name="实现状态加载和验证逻辑">
+      <subtask>实现 StateManager.load_all_states() 方法</subtask>
+      <subtask>遍历所有 `.aedt/projects/*/status.yaml` 文件</subtask>
+      <subtask>验证每个状态文件的完整性</subtask>
+      <subtask>处理损坏的状态文件（尝试从备份恢复）</subtask>
+    </task>
+    <task id="2" name="实现崩溃检测逻辑">
+      <subtask>检测 Epic 状态是否为 "developing"</subtask>
+      <subtask>验证 Agent 进程是否仍在运行</subtask>
+      <subtask>将崩溃的 Epic 状态改为 "paused"</subtask>
+      <subtask>记录崩溃恢复日志</subtask>
+    </task>
+    <task id="3" name="实现 Worktree 验证逻辑">
+      <subtask>检查 Worktree 路径是否存在</subtask>
+      <subtask>验证 Git 分支是否存在</subtask>
+      <subtask>标记无效的 Worktree 引用</subtask>
+      <subtask>提示用户清理或手动修复</subtask>
+    </task>
+    <task id="4" name="实现备份恢复机制">
+      <subtask>检测状态文件是否损坏（YAML 解析失败）</subtask>
+      <subtask>查找备份文件（.backup）</subtask>
+      <subtask>提供恢复选项（从备份恢复或重新初始化）</subtask>
+      <subtask>记录恢复操作日志</subtask>
+    </task>
+    <task id="5" name="实现用户提示和恢复命令">
+      <subtask>显示崩溃恢复摘要（多少 Epic 被暂停）</subtask>
+      <subtask>提供恢复建议（`aedt resume epic-&lt;id&gt;`）</subtask>
+      <subtask>实现 `aedt clean` 命令（清理无效 Worktree）</subtask>
+      <subtask>提供手动修复指导</subtask>
+    </task>
+    <task id="6" name="编写单元测试和集成测试">
+      <subtask>测试崩溃恢复逻辑</subtask>
+      <subtask>测试 Worktree 验证逻辑</subtask>
+      <subtask>测试备份恢复机制</subtask>
+      <subtask>测试完整的崩溃恢复流程</subtask>
+    </task>
+  </story_tasks>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-1.md</path>
+        <title>Epic 1 Technical Specification</title>
+        <section>详细设计 → StateManager 模块</section>
+        <snippet>崩溃恢复：加载时检测 developing 状态，自动改为 paused；Worktree 验证：检查 Worktree 路径是否存在，无效时标记 requires_cleanup；备份恢复：状态文件损坏时尝试从备份恢复</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-1.md</path>
+        <title>Epic 1 Technical Specification</title>
+        <section>工作流与流程 → 崩溃恢复流程</section>
+        <snippet>AEDT 启动 → StateManager.load_all_states() → 遍历 .aedt/projects/*/status.yaml → 读取并验证每个项目状态 → 检测 developing 状态改为 paused → 验证 Worktree 路径 → 显示崩溃恢复摘要</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>非功能需求 → 可靠性与稳定性</section>
+        <snippet>NFR8 - 崩溃恢复：AEDT 主进程崩溃后，重启时自动恢复所有项目状态，Epic 进度、Worktree 路径不丢失，developing 状态自动改为 paused，提示用户手动恢复</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>功能需求 → 配置与状态管理</section>
+        <snippet>FR55 - 系统可以在重启后恢复所有项目状态：读取持久化的状态文件，恢复 Epic 进度、Agent 状态（但不恢复运行中的 Agent）</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <interface>
+        <name>StateManager.load_all_states</name>
+        <kind>method</kind>
+        <signature>def load_all_states(self) -> Dict[str, ProjectState]:</signature>
+        <path>src/aedt/core/state_manager.py</path>
+        <purpose>加载所有项目状态，处理损坏文件、崩溃恢复和 Worktree 验证</purpose>
+      </interface>
+      <interface>
+        <name>StateManager._validate_state</name>
+        <kind>method</kind>
+        <signature>def _validate_state(self, project_state: ProjectState) -> ProjectState:</signature>
+        <path>src/aedt/core/state_manager.py</path>
+        <purpose>验证并修正状态：检查 Worktree 路径、检测崩溃的 Epic</purpose>
+      </interface>
+      <interface>
+        <name>StateManager._parse_project_state</name>
+        <kind>method</kind>
+        <signature>def _parse_project_state(self, data: dict) -> ProjectState:</signature>
+        <path>src/aedt/core/state_manager.py</path>
+        <purpose>解析项目状态 YAML 数据为 ProjectState 对象</purpose>
+      </interface>
+      <interface>
+        <name>clean</name>
+        <kind>function</kind>
+        <signature>@cli.command() def clean():</signature>
+        <path>src/aedt/cli/main.py</path>
+        <purpose>清理所有无效的 Worktree 和状态</purpose>
+      </interface>
+    </code>
+
+    <dependencies>
+      <python>
+        <package name="pyyaml" version=">=6.0" reason="解析状态文件，处理 YAML 错误"/>
+        <package name="pathlib" version="standard-library" reason="路径操作和验证"/>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="reliability">崩溃恢复必须自动执行，不需要用户干预即可加载状态</constraint>
+    <constraint type="safety">developing 状态必须改为 paused，不允许自动恢复运行中的 Agent</constraint>
+    <constraint type="validation">Worktree 路径验证必须在加载状态后立即执行</constraint>
+    <constraint type="backup">状态文件损坏时必须尝试从备份恢复，提供用户友好的恢复选项</constraint>
+    <constraint type="usability">崩溃恢复摘要必须清晰显示暂停的 Epic 数量和恢复建议</constraint>
+  </constraints>
+
+  <tests>
+    <standards>pytest framework, 80%+ coverage, test-driven development</standards>
+    <locations>
+      <location>tests/unit/test_state_manager.py</location>
+      <location>tests/integration/test_crash_recovery.py</location>
+    </locations>
+    <ideas>
+      <test_idea for="AC1">
+        <name>test_crash_recovery</name>
+        <description>验证崩溃后重启时将 developing 状态改为 paused</description>
+      </test_idea>
+      <test_idea for="AC1">
+        <name>test_crash_recovery_summary</name>
+        <description>验证显示崩溃恢复摘要和恢复建议</description>
+      </test_idea>
+      <test_idea for="AC2">
+        <name>test_invalid_worktree</name>
+        <description>验证 Worktree 路径不存在时标记为 requires_cleanup</description>
+      </test_idea>
+      <test_idea for="AC2">
+        <name>test_worktree_cleanup_prompt</name>
+        <description>验证提示用户运行 aedt clean 或手动修复</description>
+      </test_idea>
+      <test_idea for="AC3">
+        <name>test_corrupted_state_recovery</name>
+        <description>验证损坏状态文件时从备份恢复</description>
+      </test_idea>
+      <test_idea for="AC3">
+        <name>test_corrupted_state_prompt</name>
+        <description>验证显示损坏文件路径和备份路径</description>
+      </test_idea>
+      <test_idea for="integration">
+        <name>test_full_crash_recovery_flow</name>
+        <description>验证完整崩溃恢复流程：加载状态 → 验证 → 修正 → 显示摘要</description>
+      </test_idea>
+    </ideas>
+  </tests>
+</story_context>

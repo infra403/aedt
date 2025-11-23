@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story_context>
+  <metadata>
+    <epic_id>1</epic_id>
+    <story_id>1.2</story_id>
+    <story_key>1-2-configuration-management-system</story_key>
+    <title>配置管理系统</title>
+    <status>ready-for-dev</status>
+    <created>2025-11-23</created>
+  </metadata>
+
+  <user_story>
+    <as_a>用户</as_a>
+    <i_want>通过配置文件自定义 AEDT 行为</i_want>
+    <so_that>我可以调整最大并发数、质量门控和 Git 偏好等设置</so_that>
+  </user_story>
+
+  <acceptance_criteria>
+    <criterion id="AC1">
+      <given>AEDT 已初始化</given>
+      <when>我编辑 `.aedt/config.yaml` 并将 max_concurrent 改为 3</when>
+      <and>我运行任意 AEDT 命令</and>
+      <then>系统读取更新后的配置</then>
+      <and>应用 max_concurrent 限制为 3</and>
+    </criterion>
+    <criterion id="AC2">
+      <given>配置文件有无效的 YAML 语法</given>
+      <when>我运行任意 AEDT 命令</when>
+      <then>CLI 显示友好错误："Config file has invalid YAML syntax"</then>
+      <and>建议运行 `aedt init` 重新生成</and>
+    </criterion>
+    <criterion id="AC3">
+      <given>配置缺少必需字段</given>
+      <when>我运行任意 AEDT 命令</when>
+      <then>CLI 显示："Missing required config field: &lt;field_name&gt;"</then>
+      <and>提供期望格式</and>
+    </criterion>
+  </acceptance_criteria>
+
+  <story_tasks>
+    <task id="1" name="实现 ConfigManager 核心类">
+      <subtask>定义配置数据结构（使用 dataclass）：SubagentConfig, QualityGatesConfig, GitConfig, AEDTConfig</subtask>
+      <subtask>实现配置加载方法 load()</subtask>
+      <subtask>实现配置访问方法 get()</subtask>
+    </task>
+    <task id="2" name="实现配置验证逻辑">
+      <subtask>YAML 语法验证（使用 PyYAML safe_load）</subtask>
+      <subtask>必需字段验证（version, subagent, quality_gates, git）</subtask>
+      <subtask>数据类型验证（int、str、list 等）</subtask>
+      <subtask>提供友好的验证错误提示</subtask>
+    </task>
+    <task id="3" name="实现配置热加载机制">
+      <subtask>检测配置文件变化（文件修改时间戳）</subtask>
+      <subtask>自动重新加载配置（无需重启）</subtask>
+      <subtask>通知相关组件配置已更新</subtask>
+    </task>
+    <task id="4" name="实现错误处理和用户提示">
+      <subtask>配置文件不存在 → "请先运行 'aedt init' 初始化配置"</subtask>
+      <subtask>YAML 语法错误 → "配置文件 YAML 格式错误：{具体错误}"</subtask>
+      <subtask>缺少必需字段 → "配置文件缺少必需字段：{field_name}"</subtask>
+      <subtask>提供修复建议和期望格式</subtask>
+    </task>
+    <task id="5" name="编写单元测试">
+      <subtask>测试配置加载（有效配置）</subtask>
+      <subtask>测试 YAML 语法错误处理</subtask>
+      <subtask>测试必需字段缺失处理</subtask>
+      <subtask>测试配置热加载机制</subtask>
+    </task>
+  </story_tasks>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-1.md</path>
+        <title>Epic 1 Technical Specification</title>
+        <section>详细设计 → ConfigManager 模块</section>
+        <snippet>使用 dataclass 定义强类型配置结构（SubagentConfig, QualityGatesConfig, GitConfig, AEDTConfig），验证必需字段，提供友好错误提示</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-1.md</path>
+        <title>Epic 1 Technical Specification</title>
+        <section>数据模型与契约 → 配置文件结构</section>
+        <snippet>config.yaml 包含 version、subagent（max_concurrent, timeout, model）、quality_gates（pre_commit, epic_complete, pre_merge）、git（worktree_base, branch_prefix, auto_cleanup）</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>AEDT System Architecture</title>
+        <section>架构原则 → 配置驱动</section>
+        <snippet>所有行为通过配置文件控制（.aedt/config.yaml），不硬编码路径、命令、参数，配置文件有清晰的注释和示例</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>功能需求 → 配置与状态管理</section>
+        <snippet>FR56 - 用户可以通过配置文件自定义 AEDT 行为：Subagent 参数（并发数、超时、模型）、质量门控规则、Git 配置（Worktree 路径、分支前缀）</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <interface>
+        <name>SubagentConfig</name>
+        <kind>dataclass</kind>
+        <signature>@dataclass class SubagentConfig: max_concurrent: int = 5; timeout: int = 3600; model: str = "claude-sonnet-4"</signature>
+        <path>src/aedt/core/config_manager.py</path>
+        <purpose>Subagent 配置数据结构</purpose>
+      </interface>
+      <interface>
+        <name>QualityGatesConfig</name>
+        <kind>dataclass</kind>
+        <signature>@dataclass class QualityGatesConfig: pre_commit: List[str]; epic_complete: List[str]; pre_merge: List[str]</signature>
+        <path>src/aedt/core/config_manager.py</path>
+        <purpose>质量门控配置数据结构</purpose>
+      </interface>
+      <interface>
+        <name>GitConfig</name>
+        <kind>dataclass</kind>
+        <signature>@dataclass class GitConfig: worktree_base: str = ".aedt/worktrees"; branch_prefix: str = "epic"; auto_cleanup: bool = True</signature>
+        <path>src/aedt/core/config_manager.py</path>
+        <purpose>Git 配置数据结构</purpose>
+      </interface>
+      <interface>
+        <name>AEDTConfig</name>
+        <kind>dataclass</kind>
+        <signature>@dataclass class AEDTConfig: version: str; subagent: SubagentConfig; quality_gates: QualityGatesConfig; git: GitConfig</signature>
+        <path>src/aedt/core/config_manager.py</path>
+        <purpose>AEDT 主配置数据结构</purpose>
+      </interface>
+      <interface>
+        <name>ConfigManager.load</name>
+        <kind>method</kind>
+        <signature>def load(self) -> AEDTConfig:</signature>
+        <path>src/aedt/core/config_manager.py</path>
+        <purpose>加载配置文件，验证 YAML 语法和必需字段</purpose>
+      </interface>
+      <interface>
+        <name>ConfigManager._validate_and_parse</name>
+        <kind>method</kind>
+        <signature>def _validate_and_parse(self, data: dict) -> AEDTConfig:</signature>
+        <path>src/aedt/core/config_manager.py</path>
+        <purpose>验证配置数据并解析为强类型对象</purpose>
+      </interface>
+      <interface>
+        <name>ConfigManager.get</name>
+        <kind>method</kind>
+        <signature>def get(self, key: str, default=None):</signature>
+        <path>src/aedt/core/config_manager.py</path>
+        <purpose>获取配置值，支持默认值</purpose>
+      </interface>
+    </code>
+
+    <dependencies>
+      <python>
+        <package name="pyyaml" version=">=6.0" reason="YAML 配置文件解析，使用 safe_load 确保安全"/>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture">使用 dataclass 定义强类型配置结构，避免字典式访问</constraint>
+    <constraint type="reliability">配置加载失败时抛出明确异常，不允许使用部分加载的配置</constraint>
+    <constraint type="usability">所有配置错误提示包含具体字段名称和期望格式</constraint>
+    <constraint type="validation">验证所有必需字段（version, subagent, quality_gates, git）存在且类型正确</constraint>
+    <constraint type="extensibility">预留配置扩展接口，支持未来新增配置项</constraint>
+  </constraints>
+
+  <tests>
+    <standards>pytest framework, 80%+ coverage, test-driven development</standards>
+    <locations>
+      <location>tests/unit/test_config_manager.py</location>
+      <location>tests/integration/test_config_hot_reload.py</location>
+    </locations>
+    <ideas>
+      <test_idea for="AC1">
+        <name>test_load_config</name>
+        <description>验证加载有效配置文件并正确解析所有字段</description>
+      </test_idea>
+      <test_idea for="AC1">
+        <name>test_config_hot_reload</name>
+        <description>验证修改配置文件后重新加载并应用新值</description>
+      </test_idea>
+      <test_idea for="AC2">
+        <name>test_load_invalid_yaml</name>
+        <description>验证 YAML 语法错误时显示友好错误提示</description>
+      </test_idea>
+      <test_idea for="AC3">
+        <name>test_load_missing_fields</name>
+        <description>验证必需字段缺失时显示具体缺失字段名称</description>
+      </test_idea>
+      <test_idea for="error_handling">
+        <name>test_load_config_not_found</name>
+        <description>验证配置文件不存在时提示运行 aedt init</description>
+      </test_idea>
+      <test_idea for="validation">
+        <name>test_validate_data_types</name>
+        <description>验证配置字段类型错误时提供清晰提示</description>
+      </test_idea>
+    </ideas>
+  </tests>
+</story_context>

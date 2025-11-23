@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story_context>
+  <metadata>
+    <epic_id>1</epic_id>
+    <story_id>1.3</story_id>
+    <story_key>1-3-file-based-state-persistence-with-atomic-writes</story_key>
+    <title>文件状态持久化与原子写入</title>
+    <status>ready-for-dev</status>
+    <created>2025-11-23</created>
+  </metadata>
+
+  <user_story>
+    <as_a>用户</as_a>
+    <i_want>AEDT 可靠地保存项目和 Epic 状态到磁盘</i_want>
+    <so_that>我的进度永不丢失，即使系统崩溃</so_that>
+  </user_story>
+
+  <acceptance_criteria>
+    <criterion id="AC1">
+      <given>Epic 状态为 "developing"</given>
+      <when>状态更新（如 Story 完成）</when>
+      <then>状态文件 `.aedt/projects/&lt;project&gt;/status.yaml` 原子写入</then>
+      <and>文件包含更新后的 Epic 状态和进度</and>
+      <and>如果写入时崩溃，旧状态保持完整</and>
+    </criterion>
+    <criterion id="AC2">
+      <given>AEDT 崩溃后重启</given>
+      <when>系统初始化</when>
+      <then>从 `.aedt/projects/*/status.yaml` 加载所有项目状态</then>
+      <and>Epic 状态反映最后保存的状态</and>
+      <and>Worktree 路径被验证（无效时清理）</and>
+    </criterion>
+  </acceptance_criteria>
+
+  <story_tasks>
+    <task id="1" name="实现 DataStore 类（原子写入）">
+      <subtask>实现 atomic_write() 方法（写入临时文件 → 原子重命名）</subtask>
+      <subtask>实现 read() 方法（读取 YAML 文件）</subtask>
+      <subtask>实现 backup() 方法（备份最近 3 个版本）</subtask>
+      <subtask>处理写入失败时的临时文件清理</subtask>
+    </task>
+    <task id="2" name="定义状态数据模型">
+      <subtask>EpicState 数据类（epic_id, status, progress, agent_id, worktree_path, completed_stories, last_updated）</subtask>
+      <subtask>ProjectState 数据类（project_id, project_name, epics, last_updated）</subtask>
+      <subtask>实现数据验证逻辑</subtask>
+    </task>
+    <task id="3" name="实现 StateManager 类">
+      <subtask>实现 load_all_states() 方法（加载所有项目状态）</subtask>
+      <subtask>实现 save_project_state() 方法（保存项目状态）</subtask>
+      <subtask>实现 get_project_state() 方法（获取项目状态）</subtask>
+      <subtask>实现 update_epic_state() 方法（更新 Epic 状态）</subtask>
+    </task>
+    <task id="4" name="实现状态验证逻辑">
+      <subtask>验证 Worktree 路径是否存在</subtask>
+      <subtask>验证 Git 分支是否存在</subtask>
+      <subtask>清理无效的 Worktree 引用</subtask>
+      <subtask>处理损坏的状态文件（尝试从备份恢复）</subtask>
+    </task>
+    <task id="5" name="编写单元测试和集成测试">
+      <subtask>测试原子写入机制（成功场景）</subtask>
+      <subtask>测试写入失败时的清理逻辑</subtask>
+      <subtask>测试状态加载和保存</subtask>
+      <subtask>测试崩溃恢复场景</subtask>
+    </task>
+  </story_tasks>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-1.md</path>
+        <title>Epic 1 Technical Specification</title>
+        <section>详细设计 → DataStore 模块</section>
+        <snippet>原子写入：写入临时文件 → 重命名到目标文件（利用 POSIX rename 原子性）；备份机制：写入前自动备份，保留最近 3 个版本；错误处理：写入失败时清理临时文件，不留垃圾</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-1.md</path>
+        <title>Epic 1 Technical Specification</title>
+        <section>详细设计 → StateManager 模块</section>
+        <snippet>崩溃恢复：加载时检测 developing 状态，自动改为 paused；Worktree 验证：检查 Worktree 路径是否存在，无效时标记 requires_cleanup；备份恢复：状态文件损坏时尝试从备份恢复</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-1.md</path>
+        <title>Epic 1 Technical Specification</title>
+        <section>数据模型与契约 → 状态文件结构</section>
+        <snippet>status.yaml 包含 project_id、project_name、last_updated、epics（每个 Epic 包含 epic_id、status、progress、agent_id、worktree_path、completed_stories、last_updated）</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>非功能需求 → 可靠性与稳定性</section>
+        <snippet>NFR11 - 数据持久化可靠性：状态文件每次更新时原子写入（写入临时文件 → 重命名），避免部分写入导致的数据损坏，自动备份最近 3 个版本</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <interface>
+        <name>DataStore</name>
+        <kind>class</kind>
+        <signature>class DataStore: def __init__(self, base_path: Path)</signature>
+        <path>src/aedt/core/data_store.py</path>
+        <purpose>数据存储层，提供原子写入和备份机制</purpose>
+      </interface>
+      <interface>
+        <name>DataStore.atomic_write</name>
+        <kind>method</kind>
+        <signature>def atomic_write(self, file_path: Path, data: Dict[str, Any]) -> bool:</signature>
+        <path>src/aedt/core/data_store.py</path>
+        <purpose>原子写入 YAML 文件，使用临时文件 + 重命名确保原子性</purpose>
+      </interface>
+      <interface>
+        <name>DataStore.read</name>
+        <kind>method</kind>
+        <signature>def read(self, file_path: Path) -> Dict[str, Any]:</signature>
+        <path>src/aedt/core/data_store.py</path>
+        <purpose>读取 YAML 文件，处理格式错误</purpose>
+      </interface>
+      <interface>
+        <name>DataStore.backup</name>
+        <kind>method</kind>
+        <signature>def backup(self, file_path: Path, keep_count: int = 3) -> bool:</signature>
+        <path>src/aedt/core/data_store.py</path>
+        <purpose>备份文件，保留最近 N 个版本</purpose>
+      </interface>
+      <interface>
+        <name>EpicState</name>
+        <kind>dataclass</kind>
+        <signature>@dataclass class EpicState: epic_id: str; status: str; progress: float; agent_id: Optional[str]; worktree_path: Optional[str]; completed_stories: List[str]; last_updated: str</signature>
+        <path>src/aedt/core/state_manager.py</path>
+        <purpose>Epic 状态数据结构</purpose>
+      </interface>
+      <interface>
+        <name>ProjectState</name>
+        <kind>dataclass</kind>
+        <signature>@dataclass class ProjectState: project_id: str; project_name: str; epics: Dict[str, EpicState]; last_updated: str</signature>
+        <path>src/aedt/core/state_manager.py</path>
+        <purpose>项目状态数据结构</purpose>
+      </interface>
+      <interface>
+        <name>StateManager</name>
+        <kind>class</kind>
+        <signature>class StateManager: def __init__(self, base_dir: Path, data_store: DataStore)</signature>
+        <path>src/aedt/core/state_manager.py</path>
+        <purpose>状态管理器，负责状态加载、保存和验证</purpose>
+      </interface>
+      <interface>
+        <name>StateManager.load_all_states</name>
+        <kind>method</kind>
+        <signature>def load_all_states(self) -> Dict[str, ProjectState]:</signature>
+        <path>src/aedt/core/state_manager.py</path>
+        <purpose>加载所有项目状态，处理损坏文件和备份恢复</purpose>
+      </interface>
+      <interface>
+        <name>StateManager.save_project_state</name>
+        <kind>method</kind>
+        <signature>def save_project_state(self, project_state: ProjectState) -> bool:</signature>
+        <path>src/aedt/core/state_manager.py</path>
+        <purpose>保存项目状态，使用原子写入和备份</purpose>
+      </interface>
+      <interface>
+        <name>StateManager._validate_state</name>
+        <kind>method</kind>
+        <signature>def _validate_state(self, project_state: ProjectState) -> ProjectState:</signature>
+        <path>src/aedt/core/state_manager.py</path>
+        <purpose>验证状态，检查 Worktree 路径和 Git 分支</purpose>
+      </interface>
+    </code>
+
+    <dependencies>
+      <python>
+        <package name="pyyaml" version=">=6.0" reason="YAML 文件读写和序列化"/>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="reliability">原子写入必须使用 POSIX rename 原子性，不允许部分写入状态</constraint>
+    <constraint type="data-integrity">写入失败时必须清理临时文件，不允许遗留垃圾文件</constraint>
+    <constraint type="backup">每次写入前必须备份旧状态，保留最近 3 个版本</constraint>
+    <constraint type="platform">原子写入在 macOS 和 Linux 上依赖 POSIX 保证，Windows 支持延后</constraint>
+    <constraint type="recovery">状态文件损坏时必须尝试从备份恢复，不允许静默失败</constraint>
+  </constraints>
+
+  <tests>
+    <standards>pytest framework, 80%+ coverage, test-driven development</standards>
+    <locations>
+      <location>tests/unit/test_data_store.py</location>
+      <location>tests/unit/test_state_manager.py</location>
+      <location>tests/integration/test_state_persistence.py</location>
+      <location>tests/integration/test_crash_recovery.py</location>
+    </locations>
+    <ideas>
+      <test_idea for="AC1">
+        <name>test_atomic_write</name>
+        <description>验证原子写入成功，状态文件正确生成</description>
+      </test_idea>
+      <test_idea for="AC1">
+        <name>test_atomic_write_failure</name>
+        <description>验证写入失败时清理临时文件，旧状态完整</description>
+      </test_idea>
+      <test_idea for="AC1">
+        <name>test_backup_creation</name>
+        <description>验证写入前创建备份文件</description>
+      </test_idea>
+      <test_idea for="AC1">
+        <name>test_backup_rotation</name>
+        <description>验证保留最近 3 个备份，清理旧备份</description>
+      </test_idea>
+      <test_idea for="AC2">
+        <name>test_load_all_states</name>
+        <description>验证加载所有项目状态文件</description>
+      </test_idea>
+      <test_idea for="AC2">
+        <name>test_validate_worktree_paths</name>
+        <description>验证 Worktree 路径验证逻辑</description>
+      </test_idea>
+      <test_idea for="AC2">
+        <name>test_corrupted_state_recovery</name>
+        <description>验证损坏状态文件时从备份恢复</description>
+      </test_idea>
+    </ideas>
+  </tests>
+</story_context>
