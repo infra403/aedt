@@ -1,0 +1,99 @@
+# Workflow Status - AEDT Project
+# This tracks progress through BMM methodology Analysis, Planning, and Solutioning phases.
+# Implementation phase is tracked separately in sprint-status.yaml
+
+# STATUS DEFINITIONS:
+# ==================
+# Initial Status (before completion):
+#   - required: Must be completed to progress
+#   - optional: Can be completed but not required
+#   - recommended: Strongly suggested but not required
+#   - conditional: Required only if certain conditions met (e.g., if_has_ui)
+#
+# Completion Status:
+#   - {file-path}: File created/found (e.g., "docs/product-brief.md")
+#   - skipped: Optional/conditional workflow that was skipped
+
+generated: "2025-11-23"
+project: "AEDT"
+project_type: "AI-Enhanced Delivery Toolkit"
+selected_track: "bmad-method"
+field_type: "greenfield"
+workflow_path: ".bmad/bmm/workflows/workflow-status/paths/method-greenfield.yaml"
+
+workflow_status:
+  # Phase 0: Discovery (Optional)
+  - phase: 0
+    name: "Discovery (Optional)"
+    workflows:
+      - id: "product-brief"
+        status: "docs/product-brief-AEDT-2025-11-23.md"
+        agent: "analyst"
+        command: "*product-brief"
+        note: "Strategic product planning - COMPLETED"
+
+  # Phase 1: Planning
+  - phase: 1
+    name: "Planning"
+    workflows:
+      - id: "prd"
+        status: "docs/prd.md"
+        agent: "pm"
+        command: "*prd"
+        output: "Product Requirements Document with FRs and NFRs"
+
+      - id: "validate-prd"
+        status: "optional"
+        agent: "pm"
+        command: "*validate-prd"
+        note: "Quality check for PRD completeness"
+
+      - id: "create-design"
+        status: "conditional"
+        agent: "ux-designer"
+        command: "*create-design"
+        note: "UI/UX design - will determine after PRD if needed"
+
+  # Phase 2: Solutioning
+  - phase: 2
+    name: "Solutioning"
+    workflows:
+      - id: "create-architecture"
+        status: "required"
+        agent: "architect"
+        command: "*create-architecture"
+        output: "System architecture document"
+
+      - id: "create-epics-and-stories"
+        status: "required"
+        agent: "pm"
+        command: "*create-epics-and-stories"
+        note: "Break down PRD into implementable epics and stories"
+
+      - id: "test-design"
+        status: "recommended"
+        agent: "tea"
+        command: "*test-design"
+        output: "System-level testability review"
+
+      - id: "validate-architecture"
+        status: "optional"
+        agent: "architect"
+        command: "*validate-architecture"
+        note: "Quality check for architecture completeness"
+
+      - id: "implementation-readiness"
+        status: "required"
+        agent: "architect"
+        command: "*implementation-readiness"
+        note: "Validates cohesion before implementation"
+
+  # Phase 3: Implementation
+  - phase: 3
+    name: "Implementation"
+    workflows:
+      - id: "sprint-planning"
+        status: "required"
+        agent: "sm"
+        command: "*sprint-planning"
+        note: "Creates sprint plan - subsequent work tracked in sprint-status.yaml"
