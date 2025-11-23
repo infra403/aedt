@@ -1,0 +1,114 @@
+# generated: 2025-11-24
+# project: coding
+# project_key: coding
+# tracking_system: file-system
+# story_location: {project-root}/docs/sprint-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic exists in epic file but not contexted
+#   - contexted: Epic tech context created (required before drafting stories)
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - drafted: Story file created in stories folder
+#   - ready-for-dev: Draft approved and story context created
+#   - in-progress: Developer actively working on implementation
+#   - review: Under SM review (via code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - completed: Retrospective has been done
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epics should be 'contexted' before stories can be 'drafted'
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically drafts next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', SM reviews, then Dev moves to 'done'
+
+generated: 2025-11-24
+project: coding
+project_key: coding
+tracking_system: file-system
+story_location: '{project-root}/docs/sprint-artifacts'
+
+development_status:
+  epic-1: backlog
+  1-1-project-initialization-and-cli-framework: backlog
+  1-2-configuration-management-system: backlog
+  1-3-file-based-state-persistence-with-atomic-writes: backlog
+  1-4-structured-logging-system: backlog
+  1-5-crash-recovery-and-state-validation: backlog
+  epic-1-retrospective: optional
+
+  epic-2: backlog
+  2-1-add-project-to-aedt: backlog
+  2-2-list-all-projects-with-status: backlog
+  2-3-remove-project-from-aedt: backlog
+  2-4-intelligent-project-recommendation: backlog
+  2-5-configure-project-workflow-type: backlog
+  2-6-non-interactive-global-status-summary: backlog
+  epic-2-retrospective: optional
+
+  epic-3: backlog
+  3-1-parse-bmad-epic-documents-and-extract-metadata: backlog
+  3-2-extract-story-list-from-epic-documents: backlog
+  3-3-build-epic-dependency-dag: backlog
+  3-4-build-story-dependency-dag-multi-模式支持: backlog
+  3-5-identify-parallelizable-epics: backlog
+  3-6-identify-queued-epics-waiting-for-dependencies: backlog
+  3-7-view-epic-dependencies-in-tui: backlog
+  3-8-monitor-epic-file-changes-and-auto-refresh: backlog
+  epic-3-retrospective: optional
+
+  epic-4: backlog
+  4-1-create-git-worktree-for-epic: drafted
+  4-2-subagent-development-in-isolated-worktree: drafted
+  4-3-auto-commit-after-each-story-completion: drafted
+  4-4-detect-file-conflicts-across-parallel-epics: drafted
+  4-5-automatic-merge-to-main-branch-no-conflicts: drafted
+  4-6-pause-merge-on-conflict-detection: drafted
+  4-7-manual-conflict-resolution-workflow: drafted
+  4-8-cleanup-worktree-after-merge: drafted
+  epic-4-retrospective: optional
+
+  epic-5: backlog
+  5-1-start-multiple-epics-with-dependency-validation: backlog
+  5-2-control-maximum-concurrent-subagents: backlog
+  5-3-automatically-determine-execution-mode-single-vs-multi: backlog
+  5-4-start-epic-in-single-mode-epic-level-subagent: backlog
+  5-5-start-epic-in-multi-mode-story-level-subagents: backlog
+  5-6-handle-epic-completion-and-trigger-quality-checks: backlog
+  5-7-auto-start-queued-epics-when-dependencies-complete: backlog
+  epic-5-retrospective: optional
+
+  epic-6: backlog
+  6-1-launch-epic-level-subagent-via-claude-code-task: backlog
+  6-2-launch-story-level-subagent-multi-mode: backlog
+  6-3-build-structured-prompts-for-subagents: backlog
+  6-4-monitor-subagent-progress-and-parse-output: backlog
+  6-5-pause-and-resume-subagents: backlog
+  6-6-handle-subagent-failures-and-timeouts: backlog
+  epic-6-retrospective: optional
+
+  epic-7: backlog
+  7-1-define-quality-gate-configuration-schema: backlog
+  7-2-run-pre-commit-checks-before-story-commits: backlog
+  7-3-run-epic-completion-checks-unit-tests: backlog
+  7-4-run-pre-merge-checks-integration-tests: backlog
+  7-5-notify-user-of-quality-check-failures: backlog
+  epic-7-retrospective: optional
+
+  epic-8: backlog
+  8-1-tui-application-framework-and-layout: backlog
+  8-2-project-list-panel-with-status: backlog
+  8-3-epic-details-panel-with-story-list: backlog
+  8-4-agent-activity-panel: backlog
+  8-5-real-time-log-panel-with-auto-scroll: backlog
+  8-6-real-time-auto-refresh-and-manual-refresh: backlog
+  8-7-search-and-filter-epics: backlog
+  8-8-command-mode-and-help-system: backlog
+  epic-8-retrospective: optional
