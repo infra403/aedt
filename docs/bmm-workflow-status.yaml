@@ -59,16 +59,16 @@ workflow_status:
     name: "Solutioning"
     workflows:
       - id: "create-architecture"
-        status: "required"
+        status: "docs/architecture.md"
         agent: "architect"
         command: "*create-architecture"
         output: "System architecture document"
 
       - id: "create-epics-and-stories"
-        status: "required"
+        status: "docs/epics.md"
         agent: "pm"
         command: "*create-epics-and-stories"
-        note: "Break down PRD into implementable epics and stories"
+        output: "8 Epics + 53 Stories with 100% FR coverage"
 
       - id: "test-design"
         status: "recommended"
@@ -83,17 +83,18 @@ workflow_status:
         note: "Quality check for architecture completeness"
 
       - id: "implementation-readiness"
-        status: "required"
+        status: "docs/implementation-readiness-report-2025-11-23-fixed.md"
         agent: "architect"
         command: "*implementation-readiness"
-        note: "Validates cohesion before implementation"
+        output: "Post-fix validation - ALL HIGH issues resolved, 100% FR coverage, READY status"
 
   # Phase 3: Implementation
   - phase: 3
     name: "Implementation"
     workflows:
       - id: "sprint-planning"
-        status: "required"
+        status: "docs/sprint-status.yaml"
         agent: "sm"
         command: "*sprint-planning"
-        note: "Creates sprint plan - subsequent work tracked in sprint-status.yaml"
+        output: "Sprint tracking initialized - 8 Epics + 53 Stories + 8 Retrospectives (69 entries)"
+        note: "Subsequent development tracked in sprint-status.yaml"
