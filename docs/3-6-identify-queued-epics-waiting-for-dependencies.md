@@ -1,8 +1,9 @@
 # Story 3.6: Identify Queued Epics Waiting for Dependencies
 
-Status: drafted
+Status: review
 Epic: 3 - Epic Parsing and Dependency Analysis
 Created: 2025-11-23
+Completed: 2025-11-24
 
 ## Story
 
@@ -171,20 +172,55 @@ def get_queued_epics(dag, completed_ids):
 
 ### Agent Model Used
 
-_To be filled by dev agent_
+Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
 
 ### Debug Log References
 
-_To be filled by dev agent during implementation_
+- All tests passed (7 unit tests + 4 integration tests)
+- No debug logs required - implementation was straightforward
 
 ### Completion Notes List
 
-_To be filled by dev agent after completion:_
-- 排队查询算法实现
-- 与 parallel 查询的互补性验证
-- TUI 数据接口设计
+**实现总结：**
+
+1. **与 Story 3.5 互补** - `get_queued_epics()` 与 `get_parallel_epics()` 配合使用，覆盖所有未完成 Epics
+
+2. **实现的核心方法：**
+   - `DependencyAnalyzer.get_queued_epics(dag, completed_epic_ids)` → `List[Tuple[Epic, List[str]]]`
+   - 返回 (Epic, 缺失依赖列表) 元组
+   - 详细日志记录每个排队 Epic 的缺失依赖
+
+3. **全面测试覆盖：**
+   - 7 个单元测试：单个缺失依赖、多个缺失依赖、依赖完成后移除、互斥性验证
+   - 4 个集成测试：初始状态、多依赖缺失、状态变化、完整覆盖验证
+   - **所有 11 个测试通过**
+
+4. **关键设计决策：**
+   - 返回缺失依赖列表 - 不仅识别排队 Epic，还提供原因
+   - 与 `get_parallel_epics()` 互斥 - Epic 只能处于一种状态
+   - TUI 友好输出 - Tuple 结构便于 UI 展示
+
+5. **互补性验证：**
+   - `parallel + queued + completed = all_epics` ✅
+   - `parallel ∩ queued = ∅` ✅
+   - 集成测试验证完整性
+
+6. **性能表现：**
+   - 集成测试总耗时: 0.07s (4 tests)
+   - 与 `get_parallel_epics()` 性能相当
+
+7. **为 Story 3.7 TUI 准备就绪：**
+   - 提供结构化数据：(Epic, missing_deps)
+   - 便于 UI 展示："Epic 4: Waiting for Epic 2, Epic 3"
+   - 支持动态更新
 
 ### File List
 
-_To be filled by dev agent:_
-- **MODIFIED**: dependency_analyzer.py, test files
+**NEW:** None
+
+**MODIFIED:**
+- `aedt/domain/dependency_analyzer.py` - 添加 get_queued_epics() (42 lines added)
+- `tests/unit/domain/test_dependency_analyzer.py` - 添加 7 个排队 Epic 单元测试 (158 lines added)
+- `tests/integration/test_dag_construction.py` - 添加 4 个排队 Epic 集成测试 (104 lines added)
+
+**DELETED:** None

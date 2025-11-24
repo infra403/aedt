@@ -1,8 +1,9 @@
 # Story 3.7: View Epic Dependencies in TUI
 
-Status: drafted
+Status: review
 Epic: 3 - Epic Parsing and Dependency Analysis
 Created: 2025-11-23
+Completed: 2025-11-24
 
 ## Story
 
@@ -218,21 +219,73 @@ tests/
 
 ### Agent Model Used
 
-_To be filled by dev agent_
+Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
 
 ### Debug Log References
 
-_To be filled by dev agent during implementation_
+- All tests passed (9 unit tests)
+- No debug logs required - implementation was straightforward
 
 ### Completion Notes List
 
-_To be filled by dev agent after completion:_
-- TUI 数据接口实现
-- 状态图标映射
-- 与 Epic 8 的集成方式
+**实现总结：**
+
+1. **创建 Presentation 层** - 为 TUI 显示准备了数据接口层，与 Epic 8 TUI 框架解耦
+
+2. **实现的核心模块：**
+   - `aedt/presentation/tui_data_provider.py` - TUI 数据提供者
+   - `EpicDependencyView` 数据类 - TUI 视图模型
+   - `TUIDataProvider` 类 - 依赖视图生成和格式化
+
+3. **关键功能：**
+   - `get_epic_dependency_view()` - 获取单个 Epic 的依赖视图
+   - `format_dependencies()` - 格式化依赖为 TUI 显示字符串
+   - `get_all_epic_views()` - 批量获取所有 Epic 的视图
+   - 状态图标映射 (STATUS_ICONS) - 统一的视觉反馈
+
+4. **状态图标实现 (AC3)：**
+   - ✓ completed
+   - ⚙ developing/in-progress
+   - ⏳ queued
+   - ✗ failed
+   - ○ backlog
+   - ◐ contexted
+   - ◔ drafted
+   - ◑ review
+
+5. **测试覆盖：**
+   - 9 个单元测试：依赖视图生成、格式化、状态图标、边界情况
+   - **所有测试通过** (耗时 0.06s)
+
+6. **设计决策：**
+   - 数据层分离 - TUI 不直接调用 DependencyAnalyzer，通过 DataProvider 中介
+   - 视图模型 - `EpicDependencyView` 封装所有 TUI 需要的数据
+   - 延迟依赖 - 本 Story 提供接口，Epic 8 负责 TUI 框架实现
+
+7. **为 Epic 8 准备就绪：**
+   - 提供完整的数据接口
+   - 格式化输出已实现
+   - Epic 8 只需调用 `TUIDataProvider` 并渲染结果
+
+8. **示例输出格式 (AC1, AC2)：**
+```
+Dependencies:
+  - Epic 2: Foundation (✓ Completed)
+  - Epic 3: Parser (⚙ Developing)
+
+或
+
+Dependencies: None
+```
 
 ### File List
 
-_To be filled by dev agent:_
-- **NEW**: tui_data_provider.py (if created)
-- **MODIFIED**: TUI components (if Epic 8 exists)
+**NEW:**
+- `aedt/presentation/__init__.py` - Presentation 层初始化
+- `aedt/presentation/tui_data_provider.py` - TUI 数据提供者 (169 lines)
+- `tests/unit/presentation/__init__.py` - Presentation 层测试初始化
+- `tests/unit/presentation/test_tui_data_provider.py` - TUI 数据提供者测试 (196 lines, 9 tests)
+
+**MODIFIED:** None
+
+**DELETED:** None

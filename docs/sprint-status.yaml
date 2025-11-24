@@ -57,14 +57,14 @@ development_status:
 
   # Epic 3: Epic Parsing and Dependency Analysis
   epic-3: contexted
-  3-1-parse-bmad-epic-documents-and-extract-metadata: drafted
-  3-2-extract-story-list-from-epic-documents: drafted
-  3-3-build-epic-dependency-dag: drafted
-  3-4-build-story-dependency-dag-multi-模式支持: drafted
-  3-5-identify-parallelizable-epics: drafted
-  3-6-identify-queued-epics-waiting-for-dependencies: drafted
-  3-7-view-epic-dependencies-in-tui: drafted
-  3-8-monitor-epic-file-changes-and-auto-refresh: drafted
+  3-1-parse-bmad-epic-documents-and-extract-metadata: review
+  3-2-extract-story-list-from-epic-documents: review
+  3-3-build-epic-dependency-dag: review
+  3-4-build-story-dependency-dag-multi-模式支持: review
+  3-5-identify-parallelizable-epics: review
+  3-6-identify-queued-epics-waiting-for-dependencies: review
+  3-7-view-epic-dependencies-in-tui: review
+  3-8-monitor-epic-file-changes-and-auto-refresh: review
   epic-3-retrospective: optional
 
   # Epic 4: Git Worktree Automation and Management

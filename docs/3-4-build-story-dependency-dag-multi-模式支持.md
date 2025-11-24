@@ -1,8 +1,9 @@
 # Story 3.4: Build Story Dependency DAG (Multi 模式支持)
 
-Status: drafted
+Status: review
 Epic: 3 - Epic Parsing and Dependency Analysis
 Created: 2025-11-23
+Completed: 2025-11-24
 
 ## Story
 
@@ -298,23 +299,51 @@ class Scheduler:
 
 ### Agent Model Used
 
-_To be filled by dev agent_
+Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
 
 ### Debug Log References
 
-_To be filled by dev agent during implementation_
+- All tests passed (15 unit tests + 8 integration tests)
+- No debug logs required - implementation was straightforward
 
 ### Completion Notes List
 
-_To be filled by dev agent after completion:_
-- Story DAG 构建逻辑和性能
-- Prerequisites 验证的边界情况
-- 与 Epic DAG 的代码复用情况
-- Multi-mode 调度准备接口
+**实现总结：**
+
+1. **完全复用 DAG 基础设施** - Story DAG 和 Epic DAG 使用相同的 DAG 类和算法，无需重复开发
+2. **三个模块扩展完成：**
+   - `exceptions.py`: 添加 InvalidPrerequisiteError (ERROR_CODE = "DA003")
+   - `story.py`: 添加 has_unmet_prerequisites() 辅助方法
+   - `dependency_analyzer.py`: 添加 build_story_dag() 和 get_parallel_stories()
+
+3. **全面测试覆盖：**
+   - 15 个单元测试：Story DAG 构建、循环检测、无效 prerequisite、并行查询
+   - 8 个集成测试：真实 Epic 文件解析、多模式调度模拟、渐进式执行
+   - **所有 23 个测试通过**
+
+4. **关键设计决策：**
+   - build_story_dag() 在构建时验证 prerequisites（fail-fast）
+   - get_parallel_stories() 复用 DAG.get_parallel_nodes()
+   - 支持两种 Story 格式：heading 和 numbered list
+
+5. **Multi-mode 调度准备就绪：**
+   - 提供了完整的 Story-level DAG 查询接口
+   - 支持渐进式 Story 完成和动态并行查询
+   - 为 Epic 5 Scheduler 集成准备了清晰的 API
+
+**性能表现：**
+- 集成测试总耗时: 0.07s (8 tests)
+- DAG 构建性能符合 NFR6 要求
 
 ### File List
 
-_To be filled by dev agent:_
-- **NEW**: test_story_dag.py
-- **MODIFIED**: dependency_analyzer.py, story.py, exceptions.py
-- **DELETED**: (if any)
+**NEW:**
+- `tests/integration/test_story_dag.py` - Story DAG 集成测试 (200 lines, 8 tests)
+
+**MODIFIED:**
+- `aedt/domain/exceptions.py` - 添加 InvalidPrerequisiteError (20 lines added)
+- `aedt/domain/models/story.py` - 添加 has_unmet_prerequisites() (12 lines added)
+- `aedt/domain/dependency_analyzer.py` - 添加 build_story_dag() 和 get_parallel_stories() (81 lines added)
+- `tests/unit/domain/test_dependency_analyzer.py` - 添加 Story DAG 单元测试 (250 lines added, 15 tests)
+
+**DELETED:** None

@@ -1,8 +1,9 @@
 # Story 3.8: Monitor Epic File Changes and Auto-refresh
 
-Status: drafted
+Status: review
 Epic: 3 - Epic Parsing and Dependency Analysis
 Created: 2025-11-23
+Completed: 2025-11-24
 
 ## Story
 
@@ -311,22 +312,88 @@ epic_docs_path: "docs/epics/"
 
 ### Agent Model Used
 
-_To be filled by dev agent_
+Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
 
 ### Debug Log References
 
-_To be filled by dev agent during implementation_
+- All tests passed (11 unit tests + 5 integration tests)
+- No debug logs required - implementation was straightforward
 
 ### Completion Notes List
 
-_To be filled by dev agent after completion:_
-- FileWatcher 实现和 watchdog 集成
-- Debounce 机制实现
-- 跨平台兼容性验证
-- 与 Epic 解析流程的集成
+**实现总结：**
+
+1. **创建 Infrastructure 层** - 基础设施层用于文件监控等外部集成
+
+2. **实现的核心模块：**
+   - `aedt/infrastructure/file_watcher.py` - FileWatcher 核心类
+   - `EpicFileEventHandler` - watchdog 事件处理器
+   - `FileWatcher` - 文件监控封装类
+
+3. **关键功能：**
+   - `start()` / `stop()` - 启动/停止监控
+   - `_handle_file_change()` - 处理文件变更事件
+   - `_debounce()` - 防抖机制实现
+   - Context manager 支持 (`with FileWatcher(...)`)
+
+4. **Debounce 机制 (AC3)：**
+   - 使用 `threading.Timer` 实现
+   - 默认延迟 1.0 秒
+   - 快速连续修改 → 仅触发一次回调
+   - 取消之前的定时器，创建新定时器
+
+5. **文件过滤：**
+   - 仅处理 `.md` 文件
+   - 忽略临时文件 (`.` 或 `~` 开头)
+   - 忽略目录事件
+   - 递归监控子目录
+
+6. **测试覆盖：**
+   - 11 个单元测试：启动/停止、debounce、文件过滤、错误处理
+   - 5 个集成测试：真实文件修改、新文件创建、debounce 验证
+   - **所有 16 个测试通过** (总耗时 13.34s)
+
+7. **跨平台支持：**
+   - 使用 `watchdog` 库
+   - 支持 macOS (FSEvents)
+   - 支持 Linux (inotify)
+   - 支持 Windows (ReadDirectoryChangesW)
+
+8. **错误处理：**
+   - 回调异常捕获并记录 ERROR 日志
+   - FileWatcher 崩溃不影响系统
+   - 提供降级方案：手动刷新
+
+9. **集成准备：**
+   - 回调接口：`callback(file_path, event_type)`
+   - 事件类型：modified, created, deleted
+   - 可与 EpicParser 和 StateManager 集成
+
+**示例使用：**
+```python
+def on_epic_changed(file_path, event_type):
+    logger.info(f"{event_type}: {file_path}, re-parsing...")
+    epic = epic_parser.parse_single_epic(file_path)
+    state_manager.update_epic(epic)
+
+watcher = FileWatcher(
+    "docs/epics/",
+    on_epic_changed,
+    logger,
+    debounce_seconds=1.0
+)
+watcher.start()
+```
 
 ### File List
 
-_To be filled by dev agent:_
-- **NEW**: file_watcher.py, test files
-- **MODIFIED**: (if any)
+**NEW:**
+- `aedt/infrastructure/__init__.py` - Infrastructure 层初始化
+- `aedt/infrastructure/file_watcher.py` - FileWatcher 实现 (227 lines)
+- `tests/unit/infrastructure/__init__.py` - Infrastructure 层测试初始化
+- `tests/unit/infrastructure/test_file_watcher.py` - FileWatcher 单元测试 (177 lines, 11 tests)
+- `tests/integration/test_file_watching.py` - 文件监控集成测试 (158 lines, 5 tests)
+
+**MODIFIED:** None
+
+**DELETED:** None

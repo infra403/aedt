@@ -1,6 +1,6 @@
 # Story 3.3: Build Epic Dependency DAG
 
-Status: drafted
+Status: review
 Epic: 3 - Epic Parsing and Dependency Analysis
 Created: 2025-11-23
 
@@ -323,23 +323,54 @@ def topological_sort(self) -> List[Any]:
 
 ### Agent Model Used
 
-_To be filled by dev agent_
+claude-sonnet-4-5-20250929
 
 ### Debug Log References
 
-_To be filled by dev agent during implementation_
+实现决策：
+- DAG 使用邻接表表示，edges[from_id] = [to_id] 表示 from_id depends on to_id
+- topological_sort 初版 in-degree 计算错误，已修复为 `len(self.edges.get(node_id, []))`
+- DFS 循环检测算法使用递归栈 rec_stack 识别回边
+- find_cycle() 方法额外提供完整循环路径用于错误消息
+
+算法复杂度验证：
+- DAG 构建：O(V+E)，100 Epics 测试 < 5ms
+- 循环检测：O(V+E)，包含在构建中
+- 拓扑排序：O(V+E)
+- 测试覆盖：简单链、并行依赖、深链（1→2→3→4→5）、宽依赖（1个依赖10个）
 
 ### Completion Notes List
 
-_To be filled by dev agent after completion:_
-- DAG 算法实现细节和性能
-- 循环检测的边界情况处理
-- 为 Story DAG（Story 3.4）设计的可复用性
-- 与 Epic 5 Scheduler 的集成接口
+**核心算法实现：**
+- DAG.has_cycle(): DFS 算法，使用 visited + rec_stack 检测循环
+- DAG.find_cycle(): 额外追踪循环路径，返回 ["2", "3", "2"] 形式
+- DAG.topological_sort(): Kahn 算法（入度法），返回执行顺序
+- DAG.get_parallel_nodes(): 查询所有依赖已满足的节点，支持并发执行
+
+**异常设计：**
+- CircularDependencyError: 包含 cycle_path 属性，ERROR_CODE="DA001"
+- InvalidDependencyError: 包含 missing_epic_id + source_epic_id，ERROR_CODE="DA002"
+- 所有异常消息清晰可操作
+
+**可复用性：**
+- DAG 类完全独立，泛型设计，支持 Epic 或 Story
+- DependencyAnalyzer.build_epic_dag() 专用于 Epic，可类比实现 build_story_dag()
+- 为 Epic 5 Scheduler 提供：topological_sort() 确定顺序，get_parallel_nodes() 识别并发
+
+**测试覆盖率：**
+- 19 个 DAG 单元测试：结构、循环检测、拓扑排序、并行查询
+- 15 个 DependencyAnalyzer 单元测试：所有 AC 场景 + 边界条件
+- 8 个集成测试：端到端流程、真实 Epic 文件、复杂场景
 
 ### File List
 
-_To be filled by dev agent:_
-- **NEW**: dag.py, dependency_analyzer.py, exceptions.py
-- **MODIFIED**: (if any)
-- **DELETED**: (if any)
+**NEW**:
+- aedt/domain/models/dag.py (174 行：DAG 数据结构)
+- aedt/domain/dependency_analyzer.py (89 行：依赖分析器)
+- aedt/domain/exceptions.py (40 行：自定义异常)
+- tests/unit/domain/test_dag.py (270 行，19 tests)
+- tests/unit/domain/test_dependency_analyzer.py (185 行，15 tests)
+- tests/integration/test_dag_construction.py (240 行，8 tests)
+
+**MODIFIED**:
+- docs/3-3-build-epic-dependency-dag.md (Status: review，所有任务标记完成)
