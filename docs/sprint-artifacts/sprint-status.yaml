@@ -76,13 +76,12 @@ development_status:
   epic-4-retrospective: optional
 
   epic-5: backlog
-  5-1-start-multiple-epics-with-dependency-validation: backlog
-  5-2-control-maximum-concurrent-subagents: backlog
-  5-3-automatically-determine-execution-mode-single-vs-multi: backlog
-  5-4-start-epic-in-single-mode-epic-level-subagent: backlog
-  5-5-start-epic-in-multi-mode-story-level-subagents: backlog
-  5-6-handle-epic-completion-and-trigger-quality-checks: backlog
-  5-7-auto-start-queued-epics-when-dependencies-complete: backlog
+  5-1-start-multiple-epics-with-dependency-validation: drafted
+  5-2-control-maximum-concurrent-subagents: drafted
+  5-3-story-level-subagent-startup-preparation: drafted
+  5-5-start-epic-in-multi-mode-story-level-subagents: drafted
+  5-6-handle-epic-completion-and-trigger-quality-checks: drafted
+  5-7-auto-start-queued-epics-when-dependencies-complete: drafted
   epic-5-retrospective: optional
 
   epic-6: backlog
